@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>White House — Mess Manager</title>
+<style>
+:root{--bg:#eef2f6;--card:#fff;--ink:#14233b;--mute:#6b7a90;--line:#dbe2ea;--on:#1f8a5b;--off:#b6bfcb;--del:#c0392b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px 48px}
+header{background:var(--ink);color:#fff;border-radius:14px;padding:22px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+header h1{font-family:Georgia,"Times New Roman",serif;font-size:2.1rem;margin:0}
+header p{margin:2px 0 0;color:#aebbd0;font-size:.9rem}
+.period{display:flex;gap:8px}
+select,input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-size:1.5rem}
+.stat span{color:var(--mute);font-size:.85rem}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+h2{font-size:1.05rem;margin:0 0 12px}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:9px 14px;background:var(--ink);color:#fff}
+button.light{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button.ghost{background:transparent;color:var(--del);padding:6px 10px;border:1px solid var(--line)}
+button.close{background:var(--on)}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row input[type=text]{flex:1;min-width:150px}
+ul{list-style:none;margin:14px 0 0;padding:0}
+li{display:flex;align-items:center;gap:14px;padding:12px 4px;border-top:1px solid var(--line);flex-wrap:wrap}
+.nm{flex:1;min-width:110px;font-weight:600}
+.grp{display:flex;align-items:center;gap:7px;font-size:.85rem;color:var(--mute)}
+.grp select{padding:5px 6px}
+.sw{position:relative;width:44px;height:25px;border-radius:13px;background:var(--off);border:0;padding:0;transition:background .15s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw[aria-checked="true"]{background:var(--on)}
+.sw[aria-checked="true"]::after{transform:translateX(19px)}
+.tot{min-width:70px;text-align:center;background:#eaf6f0;border-radius:8px;padding:4px 8px;font-size:.8rem;color:var(--mute)}
+.tot b{display:block;font-size:1.2rem;color:var(--on)}
+.empty{color:var(--mute);margin:12px 0 0}
+.closebar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px;padding-top:14px;border-top:2px solid var(--line)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+th:first-child,td:first-child{text-align:left}
+thead th{background:#f3f6f9}
+tfoot td,.gt{font-weight:700;background:#f3f6f9}
+th .x{border:0;background:none;color:var(--del);padding:0 0 0 4px;cursor:pointer;font-size:.8rem}
+.tag{background:var(--ink);color:#fff;font-size:.7rem;font-weight:600;padding:1px 8px;border-radius:10px;margin-left:8px;vertical-align:middle}
+dialog{border:0;border-radius:12px;padding:22px;max-width:380px;width:92%;box-shadow:0 10px 40px rgba(0,0,0,.3);color:var(--ink)}
+dialog::backdrop{background:rgba(20,35,59,.55)}
+dialog h3{margin:0 0 6px}
+dialog p{margin:0 0 12px;color:var(--mute)}
+dialog input{width:100%;margin-bottom:8px}
+dialog .row{justify-content:flex-end}
+dialog p.err{color:var(--del);font-size:.85rem;min-height:1.2em;margin:0 0 8px}
+td.dt{text-align:left;white-space:nowrap;font-weight:600}
+.tag.red{background:var(--del)}
+.perm{background:#fff;color:var(--del);border:1px solid var(--del);padding:6px 10px;font-size:.85rem}
+.perm.act{background:var(--del);color:#fff}
+li.permoff .nm{color:var(--mute)}
+.sw:disabled{opacity:.45;cursor:not-allowed}
+select:disabled{opacity:.5}
+.link{background:none;color:#aebbd0;padding:0 0 0 6px;text-decoration:underline;font-size:.85rem}
+.youline{margin:2px 0 0;color:#aebbd0;font-size:.85rem}
+.act{display:flex;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:.9rem;flex-wrap:wrap}
+.act .at{color:var(--mute);min-width:120px}
+button.danger{background:var(--del);color:#fff}
+.ptitle{display:none}
+@media print{
+  @page{size:A4 landscape;margin:12mm}
+  body{background:#fff}
+  .wrap>*:not(#printArea){display:none!important}
+  .wrap{padding:0;max-width:none}
+  #printArea{border:0;padding:0}
+  .ptitle{display:block;margin-bottom:10px}
+  .ptitle h1{font-family:Georgia,serif;margin:0;font-size:1.5rem}
+  .noprint,.x{display:none!important}
+  table{font-size:10pt}
+  th,td{border:1px solid #444;padding:4px 5px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>White House</h1><p id="conn">Mess management</p><p class="youline"><span id="meName"></span><button class="link" id="changeMe">change</button></p></div>
+    <div class="period">
+      <select id="month" aria-label="Month"></select>
+      <input type="number" id="year" aria-label="Year" min="2000" max="9999" step="1" style="width:92px">
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><b id="sDay">0</b><span>Day meals</span></div>
+    <div class="stat"><b id="sNight">0</b><span>Night meals</span></div>
+    <div class="stat"><b id="sAll" style="color:var(--on)">0</b><span>Total meals</span></div>
+  </div>
+
+  <section>
+    <h2>Meal date</h2>
+    <div class="row">
+      <input type="date" id="closeDate" aria-label="Meal date">
+      <strong id="dateLabel"></strong>
+      <button class="close" id="closeBtn" style="margin-left:auto">Day close</button>
+    </div>
+    <p style="margin:8px 0 0;color:var(--mute);font-size:.85rem">Pick the date these meals are for. Day close saves every member's total for this date and resets guests to 0.</p>
+  </section>
+
+  <section>
+    <h2>Members and meals</h2>
+    <div class="row">
+      <input type="text" id="memberInput" aria-label="Member name" placeholder="Member name">
+      <button id="addBtn">Add member</button>
+    </div>
+    <div class="row" style="margin-top:14px"><label for="mgr"><b>Mess manager</b></label><select id="mgr"></select></div>
+    <ul id="list"></ul>
+  </section>
+
+  <section id="printArea">
+    <div class="ptitle"><h1 id="pTitle"></h1><p id="pMgr" style="margin:2px 0 0"></p></div>
+    <div class="row noprint" style="justify-content:space-between;margin-bottom:12px">
+      <h2 style="margin:0" id="sTitle">Closed days</h2>
+      <button class="light" id="printBtn">Print (A4)</button>
+    </div>
+    <div class="scroll" id="summary"></div>
+  </section>
+
+  <div class="row" style="margin-bottom:18px"><button class="light" id="actBtn" aria-expanded="false">Activity flow</button>
+    <button class="danger" id="resetBtn" style="margin-left:auto">Reset all data</button></div>
+  <section id="actPanel" hidden>
+    <h2>Activity flow</h2>
+    <p style="margin:0 0 6px;color:var(--mute);font-size:.85rem">Latest 10 changes, newest first. Older changes from the last 14 days stay hidden until you unhide them.</p>
+    <div id="actList"></div>
+  </section>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dTitle"></h3>
+  <p id="dMsg"></p>
+  <div id="dWhoBox" style="display:none">
+    <label for="dWho" id="dWhoLbl" style="font-size:.85rem;color:var(--mute)"></label>
+    <select id="dWho" style="width:100%;margin:4px 0 8px"></select>
+    <input type="text" id="dOther" placeholder="Type your name" autocomplete="off" style="display:none">
+  </div>
+  <input type="password" id="dPass" placeholder="Password" autocomplete="off">
+  <p class="err" id="dErr"></p>
+  <div class="row"><button class="light" id="dNo">Cancel</button><button id="dYes">Yes</button></div>
+</dialog>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+// ===== PASTE YOUR FIREBASE CONFIG HERE (see steps) =====
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDQ4EQ18yxHtDdnBEuXrxuHqC6IXadVQXA",
+  authDomain: "meal-system-676a5.firebaseapp.com",
+  databaseURL: "https://meal-system-676a5-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "meal-system-676a5",
+  appId: "1:503002026834:web:f0c201bb25323523e7208b"
+};
+// =======================================================
+const PASS = "22107020@";   // delete member
+const PASS2 = "22107013@";  // delete closed day
+const PASS3 = "420420+420420"; // reset all data
+const KEY = "whitehouse-mess-v2";
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const now = new Date();
+let state = { members: [], records: [], manager: null, activity: [], month: now.getMonth(), year: now.getFullYear() };
+
+let db = null;
+const save = () => {
+  const data = { members: state.members, records: state.records, manager: state.manager || null, activity: state.activity };
+  if (db) db.ref("mess").set(data).catch(e => alert("Could not save: " + e.message));
+  else { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} }
+};
+const arr = x => Array.isArray(x) ? x : Object.values(x || {});
+function applyRemote(v) {
+  v = v || {};
+  state.members = arr(v.members); state.records = arr(v.records).map(r => Object.assign({}, r, { rows: arr(r.rows) }));
+  state.manager = v.manager || null;
+  state.activity = arr(v.activity);
+}
+const $ = id => document.getElementById(id);
+const count = m => (m.day ? 1 : 0) + (+m.dg) + (m.night ? 1 : 0) + (+m.ng);
+const dayCount = m => (m.day ? 1 : 0) + (+m.dg);
+const nightCount = m => (m.night ? 1 : 0) + (+m.ng);
+const pad = n => String(n).padStart(2, "0");
+const me = () => { try { return localStorage.getItem("wh-me") || ""; } catch (e) { return ""; } };
+function log(text, who) {
+  const cut = Date.now() - 14 * 864e5;
+  state.activity = state.activity.filter(a => a && a.t > cut);
+  state.activity.push({ t: Date.now(), who: who || me() || "Unknown", text });
+}
+let actAll = false;
+function renderActivity() {
+  const cut = Date.now() - 14 * 864e5, box = $("actList"); box.innerHTML = "";
+  const items = state.activity.filter(a => a && a.t > cut).sort((a, b) => b.t - a.t);
+  if (!items.length) { box.appendChild(el("p", "empty", "No activity yet.")); return; }
+  const shown = actAll ? items : items.slice(0, 10);
+  shown.forEach(a => {
+    const r = el("div", "act");
+    r.appendChild(el("span", "at", new Date(a.t).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true })));
+    const w = el("span"); w.append(el("b", "", a.who), a.text); r.appendChild(w);
+    box.appendChild(r);
+  });
+  if (items.length > 10) {
+    const b = el("button", "light", actAll ? "Hide older" : "Show all (" + (items.length - 10) + " more)");
+    b.style.marginTop = "10px";
+    b.onclick = () => { actAll = !actAll; renderActivity(); };
+    box.appendChild(b);
+  }
+}
+function updateMe() { $("meName").textContent = me() ? "Using as: " + me() : "Your name is not set"; }
+async function pickMe() {
+  const v = await ask({ title: "Who are you?", msg: "Your name is saved on this device and shown in the Activity flow for every change you make.",
+    yes: "Continue", who: "Your name", other: true, pref: me() });
+  if (v) { try { localStorage.setItem("wh-me", v); } catch (e) {} }
+  render();
+}
+
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+
+function guestSelect(val, onchange, label, dis) {
+  const s = el("select"); s.disabled = !!dis; s.setAttribute("aria-label", label);
+  for (let i = 0; i <= 5; i++) { const o = el("option", "", i); o.value = i; s.appendChild(o); }
+  s.value = val; s.onchange = () => onchange(+s.value);
+  return s;
+}
+function toggle(on, onclick, label, dis) {
+  const b = el("button", "sw"); b.disabled = !!dis; b.setAttribute("role", "switch");
+  b.setAttribute("aria-checked", on); b.setAttribute("aria-label", label); b.onclick = onclick;
+  return b;
+}
+
+function ask(o) {
+  return new Promise(res => {
+    const d = $("dlg"), sel = $("dWho"), oth = $("dOther");
+    $("dTitle").textContent = o.title; $("dMsg").textContent = o.msg;
+    $("dYes").textContent = o.yes || "Yes"; $("dErr").textContent = "";
+    $("dPass").value = ""; $("dPass").style.display = o.pass ? "block" : "none";
+    $("dWhoBox").style.display = o.who ? "block" : "none";
+    if (o.who) {
+      $("dWhoLbl").textContent = o.who; sel.innerHTML = "";
+      state.members.forEach(m => { const op = el("option", "", m.name); op.value = m.name; sel.appendChild(op); });
+      if (o.other || !state.members.length) { const op = el("option", "", "Someone else…"); op.value = "__other"; sel.appendChild(op); }
+      sel.value = [...sel.options].some(x => x.value === o.pref) ? o.pref : sel.options[0].value;
+      oth.value = "";
+      const sync = () => { oth.style.display = sel.value === "__other" ? "block" : "none"; };
+      sel.onchange = sync; sync();
+    }
+    $("dYes").onclick = () => {
+      let who = true;
+      if (o.who) {
+        who = sel.value === "__other" ? oth.value.trim() : sel.value;
+        if (!who) { $("dErr").textContent = "Select or type a name."; return; }
+      }
+      if (o.pass && $("dPass").value !== o.pass) { $("dErr").textContent = "Wrong password. Try again."; return; }
+      d.close(); res(who);
+    };
+    $("dNo").onclick = () => d.close();
+    $("dPass").onkeydown = e => { if (e.key === "Enter") $("dYes").click(); };
+    d.onclose = () => res(false);
+    d.showModal();
+    if (o.pass) $("dPass").focus();
+  });
+}
+
+function setCloseDateRange() {
+  const first = `${state.year}-${pad(state.month + 1)}-01`;
+  const last = `${state.year}-${pad(state.month + 1)}-${pad(new Date(state.year, state.month + 1, 0).getDate())}`;
+  const d = $("closeDate"); d.min = first; d.max = last;
+  const t = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  if (!d.value || d.value < first || d.value > last) d.value = (t >= first && t <= last) ? t : first;
+}
+
+function renderMembers() {
+  const list = $("list"); list.innerHTML = "";
+  const mg = $("mgr"); mg.innerHTML = "";
+  const o0 = el("option", "", "Select manager"); o0.value = ""; mg.appendChild(o0);
+  state.members.forEach(m => { const o = el("option", "", m.name); o.value = m.id; mg.appendChild(o); });
+  mg.value = state.manager || "";
+  if (!state.members.length) list.appendChild(el("p", "empty", "No members yet. Add the first member above."));
+  state.members.forEach(m => {
+    const li = el("li", m.perm ? "permoff" : "");
+    const nmw = el("span", "nm", m.name);
+    if (state.manager === m.id) nmw.appendChild(el("span", "tag", "Manager"));
+    if (m.perm) nmw.appendChild(el("span", "tag red", "Permanent off"));
+    li.appendChild(nmw);
+    const d = el("div", "grp"); d.append("Day", toggle(m.day, () => { m.day = !m.day; log(m.name + ": Day meal " + (m.day ? "ON" : "OFF")); save(); render(); }, "Day meal for " + m.name, m.perm),
+      "Guest", guestSelect(m.dg, v => { log(m.name + ": Day guest meals " + m.dg + " to " + v); m.dg = v; save(); render(); }, "Day guest meals for " + m.name, m.perm));
+    const n = el("div", "grp"); n.append("Night", toggle(m.night, () => { m.night = !m.night; log(m.name + ": Night meal " + (m.night ? "ON" : "OFF")); save(); render(); }, "Night meal for " + m.name, m.perm),
+      "Guest", guestSelect(m.ng, v => { log(m.name + ": Night guest meals " + m.ng + " to " + v); m.ng = v; save(); render(); }, "Night guest meals for " + m.name, m.perm));
+    const t = el("div", "tot"); t.append("Total", el("b", "", count(m)));
+    const del = el("button", "ghost", "Delete");
+    del.onclick = async () => {
+      if (await ask({ title: "Delete " + m.name + "?", msg: "Enter the password to delete this member.", pass: PASS, yes: "Delete" })) {
+        log("Deleted member " + m.name);
+        state.members = state.members.filter(x => x.id !== m.id);
+        if (state.manager === m.id) state.manager = null;
+        save(); render();
+      }
+    };
+    const pm = el("button", "perm" + (m.perm ? " act" : ""), m.perm ? "Permanent off ✓" : "Permanent off");
+    pm.onclick = async () => {
+      if (m.perm) { m.perm = false; m.day = true; m.night = true; log(m.name + ": Permanent off removed, meal back on"); save(); render(); return; }
+      if (await ask({ title: "Permanent off for " + m.name + "?", msg: "Meal stays off every day until you turn it back on.", yes: "Yes, turn off" })) {
+        m.perm = true; m.day = false; m.night = false; m.dg = 0; m.ng = 0; log(m.name + ": Permanent off turned on"); save(); render();
+      }
+    };
+    li.append(d, n, t, pm, del);
+    list.appendChild(li);
+  });
+  const sum = f => state.members.reduce((a, m) => a + f(m), 0);
+  $("sDay").textContent = sum(dayCount);
+  $("sNight").textContent = sum(nightCount);
+  $("sAll").textContent = sum(count);
+}
+
+const shortName = n => {
+  n = n.trim(); if (n.length <= 9) return n;
+  const w = n.split(/\s+/).find(x => x.length > 2) || n;
+  return w.length > 9 ? w.slice(0, 8) + "." : w;
+};
+const dfmt = d => { const p = d.split("-"); return (+p[2]) + " " + MONTHS[+p[1] - 1].slice(0, 3); };
+
+function renderSummary() {
+  const label = MONTHS[state.month] + " " + state.year;
+  $("pTitle").textContent = "White House — " + label + " meal summary";
+  const mgr = state.members.find(m => m.id === state.manager);
+  $("pMgr").textContent = mgr ? "Manager: " + mgr.name : "";
+  $("sTitle").textContent = "Closed days — " + label;
+  const recs = state.records.filter(r => r.month === state.month && r.year === state.year).sort((a, b) => a.date.localeCompare(b.date));
+  const box = $("summary"); box.innerHTML = "";
+  if (!recs.length) { box.appendChild(el("p", "empty", "No day closed in this month yet.")); return; }
+  const people = new Map();
+  recs.forEach(r => r.rows.forEach(x => { if (!people.has(x.id)) people.set(x.id, x.name); }));
+  const tbl = el("table"), thead = el("thead"), hr = el("tr");
+  hr.appendChild(el("th", "", "Date"));
+  people.forEach(name => { const th = el("th", "", shortName(name)); th.title = name; hr.appendChild(th); });
+  hr.appendChild(el("th", "", "Total")); thead.appendChild(hr); tbl.appendChild(thead);
+  const tb = el("tbody"); const colTot = new Map(); people.forEach((n, id) => colTot.set(id, 0)); let grand = 0;
+  recs.forEach(r => {
+    const tr = el("tr"), dt = el("td", "dt", dfmt(r.date)); dt.title = r.date + (r.closedBy ? " — closed by " + r.closedBy : "");
+    const x = el("button", "x", "Delete"); x.setAttribute("aria-label", "Delete closed day " + r.date);
+    x.style.cssText = "border:1px solid var(--line);background:#fff;color:var(--del);padding:2px 8px;margin-left:8px;border-radius:6px;cursor:pointer;font-size:.75rem";
+    x.onclick = async () => {
+      const who = await ask({ title: "Delete " + dfmt(r.date) + "?", msg: "Choose who is deleting and enter the password.", pass: PASS2, who: "Deleted by", pref: me(), yes: "Delete" });
+      if (who) { log("Deleted closed day " + dfmt(r.date), who); state.records = state.records.filter(z => z !== r); save(); render(); }
+    };
+    dt.appendChild(x); tr.appendChild(dt); let rt = 0;
+    people.forEach((n, id) => { const row = r.rows.find(z => z.id === id); const v = row ? row.total : 0; rt += v; colTot.set(id, colTot.get(id) + v); tr.appendChild(el("td", "", v)); });
+    grand += rt; tr.appendChild(el("td", "gt", rt)); tb.appendChild(tr);
+  });
+  tbl.appendChild(tb);
+  const tf = el("tfoot"), fr = el("tr"); fr.appendChild(el("td", "", "Total meals"));
+  people.forEach((n, id) => fr.appendChild(el("td", "", colTot.get(id)))); fr.appendChild(el("td", "", grand));
+  tf.appendChild(fr); tbl.appendChild(tf); box.appendChild(tbl);
+}
+
+function updateDateLabel() {
+  const v = $("closeDate").value;
+  $("dateLabel").textContent = v ? new Date(v + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short", year: "numeric" }) : "";
+}
+function render() { renderMembers(); renderSummary(); updateDateLabel(); renderActivity(); updateMe(); }
+
+function addMember() {
+  const v = $("memberInput").value.trim(); if (!v) return;
+  log("Added member " + v);
+  state.members.push({ id: Date.now() + "-" + Math.random().toString(36).slice(2, 6), name: v, day: true, night: true, dg: 0, ng: 0 });
+  $("memberInput").value = ""; save(); render(); $("memberInput").focus();
+}
+
+async function dayClose() {
+  if (!state.members.length) { alert("Add members first."); return; }
+  const date = $("closeDate").value; if (!date) return;
+  const dup = state.records.find(r => r.date === date);
+  const ok = await ask({ title: "Are you sure to close?",
+    msg: "Close " + dfmt(date) + "? Every member's total meal will be saved." + (dup ? " This date is already closed, so it will be replaced." : ""),
+    yes: "Yes, close day", who: "Closed by", pref: me() || ((state.members.find(m => m.id === state.manager) || {}).name) });
+  if (!ok) return;
+  const who = ok;
+  state.records = state.records.filter(r => r.date !== date);
+  state.records.push({ date, month: state.month, year: state.year, closedBy: who,
+    rows: state.members.map(m => ({ id: m.id, name: m.name, day: dayCount(m), night: nightCount(m), total: count(m) })) });
+  log("Closed " + dfmt(date) + " (closed by " + who + ")", who);
+  state.members.forEach(m => { m.dg = 0; m.ng = 0; });
+  save(); render();
+}
+
+MONTHS.forEach((m, i) => { const o = el("option", "", m); o.value = i; $("month").appendChild(o); });
+$("month").value = state.month; $("year").value = state.year;
+$("month").onchange = () => { state.month = +$("month").value; setCloseDateRange(); render(); };
+$("year").onchange = () => {
+  const y = Math.floor(+$("year").value);
+  if (!(y >= 2000 && y <= 9999)) { $("year").value = state.year; return; }
+  state.year = y; setCloseDateRange(); render();
+};
+$("mgr").onchange = () => {
+  state.manager = $("mgr").value || null;
+  const mm = state.members.find(m => m.id === state.manager);
+  log(mm ? "Mess manager set to " + mm.name : "Mess manager cleared");
+  save(); render();
+};
+$("actBtn").onclick = () => { const p = $("actPanel"); p.hidden = !p.hidden; $("actBtn").setAttribute("aria-expanded", String(!p.hidden)); };
+$("changeMe").onclick = pickMe;
+$("resetBtn").onclick = async () => {
+  if (await ask({ title: "Reset all data?", msg: "This deletes all members, closed days, the manager and the Activity flow for everyone. It cannot be undone.", pass: PASS3, yes: "Reset everything" })) {
+    state.members = []; state.records = []; state.manager = null; state.activity = [];
+    save(); render();
+  }
+};
+$("addBtn").onclick = addMember;
+$("memberInput").addEventListener("keydown", e => { if (e.key === "Enter") addMember(); });
+$("closeBtn").onclick = dayClose;
+$("closeDate").oninput = updateDateLabel;
+$("printBtn").onclick = () => window.print();
+setCloseDateRange(); render();
+
+if (String(FIREBASE_CONFIG.databaseURL).startsWith("https://")) {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.database();
+  db.ref(".info/connected").on("value", s => { $("conn").textContent = s.val() ? "Mess management — online, shared" : "Mess management — connecting…"; });
+  let first = true;
+  db.ref("mess").on("value", snap => { applyRemote(snap.val()); render(); if (first) { first = false; if (!me()) pickMe(); } });
+} else {
+  $("conn").textContent = "Not connected — data saved on this device only";
+  try { const r = localStorage.getItem(KEY); if (r) { applyRemote(JSON.parse(r)); render(); } } catch (e) {}
+  if (!me()) pickMe();
+}
+</script>
+</body>
+</html>
